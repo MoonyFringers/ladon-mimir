@@ -151,3 +151,19 @@ def test_context_manager_closes(repo: MimirRepository) -> None:
     # connection should be closed; further queries raise
     with pytest.raises(duckdb.ConnectionException):
         r._conn.execute("SELECT 1")
+
+
+def test_persistence_across_runs(tmp_path: pytest.TempPathFactory) -> None:
+    db = str(tmp_path / "test.db")  # type: ignore[operator]
+
+    with MimirRepository(db) as r1:
+        r1.start_run("Mathematical finance")
+        r1.save_article(_make_article(10), _CATEGORY)
+        r1.save_article(_make_article(20), _CATEGORY)
+        r1.finish_run()
+
+    # second instance against the same file must see both articles
+    with MimirRepository(db) as r2:
+        ids = r2.get_existing_page_ids()
+
+    assert ids == frozenset({10, 20})

@@ -135,9 +135,13 @@ class MimirRepository:
         return frozenset(int(row[0]) for row in rows)
 
     def save_article(
-        self, record: ArticleRecord, _parent: CategoryRecord
+        self, record: ArticleRecord, _parent: CategoryRecord  # noqa: ARG002
     ) -> None:
-        """Upsert one ``ArticleRecord`` into ``mimir_articles``."""
+        """Upsert one ``ArticleRecord`` into ``mimir_articles``.
+
+        *_parent* is accepted for runner-protocol compatibility but not stored;
+        article categories are taken from ``record.categories``.
+        """
         self._conn.execute(
             _UPSERT_ARTICLE,
             [
