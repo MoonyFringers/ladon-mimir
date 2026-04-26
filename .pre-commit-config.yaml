@@ -29,3 +29,4 @@ repos:
           - ladon-crawl>=0.2.0
           - duckdb>=0.10
           - click>=8.0
+          - pytest>=8.0
