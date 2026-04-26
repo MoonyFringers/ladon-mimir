@@ -23,8 +23,10 @@ class WikiArticleSink:
     """
 
     async def consume(
-        self, ref: ArticleRef, client: AsyncHttpClient
+        self, ref: object, client: AsyncHttpClient
     ) -> ArticleRecord:
+        if not isinstance(ref, ArticleRef):
+            raise TypeError(f"expected ArticleRef, got {type(ref).__name__}")
         record = await _fetch_article(ref.title, client)
         if record is None:
             raise LeafUnavailableError(
