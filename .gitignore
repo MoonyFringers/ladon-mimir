@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.env
+.coverage
+coverage.xml
+.pytest_cache/
+.ruff_cache/
+.venv/
+.vscode/
+pyrightconfig.json
+*.egg-info/
+dist/
+
+# DuckDB output files (not checked in)
+*.duckdb
+*.parquet
+
+# Environment specific
+.envrc
+.pre-commit-cache/
+.virtualenv-appdata/
