@@ -56,13 +56,16 @@ async def _crawl(
     depth: int,
     limit: int,
     exclude_categories: list[str],
+    existing_ids: frozenset[int],
 ) -> tuple[int, int]:
     """Run the async BFS crawl and persist results.
+
+    *existing_ids* is supplied by the caller (already read from the DB) so
+    that only one connection is opened before the crawl begins.
 
     Returns ``(articles_saved, articles_failed)``.
     """
     with MimirRepository(db_path) as repo:
-        existing_ids = repo.get_existing_page_ids()
         repo.start_run(category)
 
         plugin = MimirPlugin(
@@ -116,9 +119,11 @@ async def _run(
     """Orchestrate a full crawl-and-export cycle."""
     limit_label = str(limit) if limit > 0 else "unlimited"
 
+    with MimirRepository(db_path) as repo:
+        existing_ids = repo.get_existing_page_ids()
+    existing = len(existing_ids)
+
     if dry_run:
-        with MimirRepository(db_path) as repo:
-            existing = len(repo.get_existing_page_ids())
         print(f'Dry run — would crawl "{category}" → {db_path}')
         print(
             f"  depth={depth}  concurrency={concurrency}  limit={limit_label}"
@@ -135,9 +140,6 @@ async def _run(
             print(f"  --sync: would export to {parquet}")
         return
 
-    with MimirRepository(db_path) as repo:
-        existing = len(repo.get_existing_page_ids())
-
     resume_note = (
         f"  ({existing:,} articles already stored)" if existing else ""
     )
@@ -150,6 +152,7 @@ async def _run(
         depth=depth,
         limit=limit,
         exclude_categories=exclude_categories,
+        existing_ids=existing_ids,
     )
 
     parts = [f"{saved:,} article{'s' if saved != 1 else ''}"]

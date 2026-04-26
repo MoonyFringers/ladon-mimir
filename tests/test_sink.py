@@ -96,3 +96,9 @@ async def test_last_modified_is_utc_aware(client: AsyncHttpClient) -> None:
         result = await sink.consume(_ref(), client)
 
     assert result.last_modified.tzinfo is not None
+
+
+async def test_consume_wrong_ref_type_raises(client: AsyncHttpClient) -> None:
+    sink = WikiArticleSink()
+    with pytest.raises(TypeError, match="expected ArticleRef"):
+        await sink.consume("not-a-ref", client)
