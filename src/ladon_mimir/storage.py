@@ -19,6 +19,11 @@ def export_parquet(db_path: str, parquet_path: str) -> int:
 
     Returns:
         Number of articles written.
+
+    Note:
+        The ``categories`` column is exported as a JSON-encoded ``VARCHAR``
+        (e.g. ``'["Cat A", "Cat B"]'``).  Consumers must parse it with
+        ``json.loads`` or DuckDB's ``json_extract`` / ``json_array_elements``.
     """
     with duckdb.connect(db_path) as conn:
         result = conn.execute(
