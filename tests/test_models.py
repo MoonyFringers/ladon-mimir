@@ -1,4 +1,7 @@
+import dataclasses
 from datetime import datetime, timezone
+
+import pytest
 
 from ladon_mimir.models import ArticleRecord, CategoryRecord, SubCategoryRecord
 from ladon_mimir.refs import ArticleRef, CategoryRef
@@ -31,11 +34,8 @@ def test_article_record_frozen() -> None:
         word_count=2,
         url="https://en.wikipedia.org/wiki/Test",
     )
-    try:
+    with pytest.raises(dataclasses.FrozenInstanceError):
         record.title = "mutated"  # type: ignore[misc]
-        assert False, "should have raised"
-    except Exception:
-        pass
 
 
 def test_category_record() -> None:
