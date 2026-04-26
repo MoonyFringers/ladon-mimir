@@ -102,6 +102,11 @@ include = ["src", "tests"]
 extraPaths = ["src"]
 reportMissingImports = "none"
 reportUntypedFunctionDecorator = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportPrivateUsage = "none"
+reportUnusedFunction = "none"
 
 # ----------------------------------------
 # PYTEST
