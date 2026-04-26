@@ -71,6 +71,8 @@ class WikiCategoryExpander:
         seen: set[int],
         out: list[ArticleRef],
     ) -> None:
+        # seen and out are shared across all recursive calls within one expand()
+        # invocation — safe because asyncio is single-threaded within an event loop.
         members: MembersResult = await _fetch_members(title, client)
 
         for article in members.articles:

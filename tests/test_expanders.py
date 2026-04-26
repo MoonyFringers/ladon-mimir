@@ -174,6 +174,28 @@ async def test_empty_root(client: AsyncHttpClient) -> None:
     assert result.child_refs == []
 
 
+async def test_depth_cap_not_recursed(client: AsyncHttpClient) -> None:
+    """Sub-categories at depth == max_depth are never fetched."""
+    root_members = _members(articles=[_ref(1)], sub_categories=["Sub A"])
+    # Sub A is at depth=1 == max_depth=1; it has a sub-cat that must NOT be fetched
+    sub_a_members = _members(
+        articles=[_ref(2)], sub_categories=["Sub B (depth-2)"]
+    )
+
+    with patch(
+        "ladon_mimir.expanders._fetch_members", new_callable=AsyncMock
+    ) as mock_fetch:
+        mock_fetch.side_effect = [root_members, sub_a_members]
+        expander = WikiCategoryExpander(max_depth=1)
+        result = await expander.expand(CategoryRef(title="Root"), client)
+
+    # Only root + Sub A fetched; Sub B (depth-2) must not be fetched
+    assert mock_fetch.call_count == 2
+    called_titles = [call.args[0] for call in mock_fetch.call_args_list]
+    assert "Sub B (depth-2)" not in called_titles
+    assert result.record.article_count == 2
+
+
 async def test_sub_categories_fetched_concurrently(
     client: AsyncHttpClient,
 ) -> None:
