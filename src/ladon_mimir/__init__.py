@@ -6,6 +6,7 @@ from .plugin import MimirPlugin
 from .refs import ArticleRef, CategoryRef
 from .sink import LeafUnavailableError, WikiArticleSink
 from .source import WikiCategorySource
+from .storage import export_parquet
 
 try:
     __version__ = version("ladon-mimir")
@@ -25,4 +26,5 @@ __all__ = [
     "WikiArticleSink",
     "WikiCategoryExpander",
     "WikiCategorySource",
+    "export_parquet",
 ]
