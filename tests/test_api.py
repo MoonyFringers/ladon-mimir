@@ -42,9 +42,7 @@ def _members_response(
     subcats: list[dict[str, object]],
     cont: str | None = None,
 ) -> bytes:
-    body: dict[str, object] = {
-        "query": {"categorymembers": articles + subcats}
-    }
+    body: dict[str, object] = {"query": {"categorymembers": articles + subcats}}
     if cont:
         body["continue"] = {"cmcontinue": cont, "continue": "-||"}
     return json.dumps(body).encode()
@@ -96,7 +94,9 @@ async def test_fetch_members_articles_and_subcats(
         "&cmtype=subcat%7Cpage&cmlimit=500&format=json",
         content=_members_response(
             articles=[{"pageid": 1, "ns": 0, "title": "Black–Scholes model"}],
-            subcats=[{"pageid": 100, "ns": 14, "title": "Category:Financial models"}],
+            subcats=[
+                {"pageid": 100, "ns": 14, "title": "Category:Financial models"}
+            ],
         ),
     )
     result = await _fetch_members("Mathematical_finance", client)
@@ -150,7 +150,9 @@ async def test_fetch_members_strips_category_prefix(
     httpx_mock.add_response(
         content=_members_response(
             articles=[],
-            subcats=[{"pageid": 50, "ns": 14, "title": "Category:Actuarial science"}],
+            subcats=[
+                {"pageid": 50, "ns": 14, "title": "Category:Actuarial science"}
+            ],
         ),
     )
     result = await _fetch_members("Mathematical_finance", client)
