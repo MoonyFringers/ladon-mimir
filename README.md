@@ -133,7 +133,6 @@ from ladon_mimir.models import ArticleRecord, CategoryRecord
 from ladon_mimir.repository import MimirRepository
 
 async def crawl(category: str, db_path: str) -> None:
-    plugin = MimirPlugin(category=category, max_depth=2)
     config = RunConfig(async_concurrency=10)
     client_config = HttpClientConfig(
         user_agent="my-bot/1.0",
@@ -143,6 +142,12 @@ async def crawl(category: str, db_path: str) -> None:
     with MimirRepository(db_path) as repo:
         existing_ids = repo.get_existing_page_ids()
         repo.start_run(category)
+
+        plugin = MimirPlugin(
+            category=category,
+            max_depth=2,
+            skip_page_ids=existing_ids,  # resume: skip already-stored articles
+        )
 
         async def on_leaf(record: object, parent: object) -> None:
             if isinstance(record, ArticleRecord) and isinstance(parent, CategoryRecord):
