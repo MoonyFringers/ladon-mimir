@@ -3,19 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 
+from ladon import Expansion
 from ladon.networking import AsyncHttpClient
 
 from .api import MembersResult, _fetch_members
 from .models import CategoryRecord
 from .refs import ArticleRef, CategoryRef
-
-
-@dataclass
-class Expansion:
-    record: CategoryRecord
-    child_refs: list[ArticleRef]
 
 
 class WikiCategoryExpander:
@@ -45,14 +39,17 @@ class WikiCategoryExpander:
         self._skip_page_ids = skip_page_ids
         self._category_blocklist = category_blocklist
 
-    async def expand(
-        self, ref: CategoryRef, client: AsyncHttpClient
-    ) -> Expansion:
+    async def expand(self, ref: object, client: AsyncHttpClient) -> Expansion:
         """Expand *ref* into a flat list of unique article references.
+
+        *ref* must be a ``CategoryRef``; the ``object`` annotation satisfies
+        the ``AsyncExpander`` protocol's contravariant parameter requirement.
 
         Returns an ``Expansion`` containing a ``CategoryRecord`` (article
         count after dedup) and the deduplicated ``ArticleRef`` list.
         """
+        if not isinstance(ref, CategoryRef):
+            raise TypeError(f"expected CategoryRef, got {type(ref).__name__}")
         seen: set[int] = set(self._skip_page_ids)
         articles: list[ArticleRef] = []
         await self._bfs(

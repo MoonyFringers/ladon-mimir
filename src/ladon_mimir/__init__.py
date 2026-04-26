@@ -1,6 +1,8 @@
 from importlib.metadata import PackageNotFoundError, version
 
-from .expanders import Expansion, WikiCategoryExpander
+from ladon import Expansion
+
+from .expanders import WikiCategoryExpander
 from .models import ArticleRecord, CategoryRecord, SubCategoryRecord
 from .plugin import MimirPlugin
 from .refs import ArticleRef, CategoryRef
