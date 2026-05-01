@@ -2,15 +2,41 @@
 
 from __future__ import annotations
 
+from typing import cast
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from ladon.networking import AsyncHttpClient
 from ladon.networking.config import HttpClientConfig
+from ladon.plugins.models import Expansion
 
 from ladon_mimir.api import DEFAULT_USER_AGENT, MembersResult
 from ladon_mimir.expanders import WikiCategoryExpander
+from ladon_mimir.models import CategoryRecord
 from ladon_mimir.refs import ArticleRef, CategoryRef
+
+# ---------------------------------------------------------------------------
+# Type-narrowing helpers
+#
+# Expansion.record and Expansion.child_refs are typed as `object` /
+# `Sequence[object]` in Ladon core (generic typing is a planned v0.3.0
+# addition). These helpers narrow the types for pyright while also
+# asserting the runtime shape — so a wrong type surfaces as a test failure
+# rather than an AttributeError.
+# ---------------------------------------------------------------------------
+
+
+def _record(exp: Expansion) -> CategoryRecord:
+    assert isinstance(exp.record, CategoryRecord)
+    return exp.record
+
+
+def _refs(exp: Expansion) -> list[ArticleRef]:
+    assert all(
+        isinstance(r, ArticleRef) for r in exp.child_refs
+    ), f"expected all ArticleRef, got {[type(r).__name__ for r in exp.child_refs]}"
+    return cast(list[ArticleRef], list(exp.child_refs))
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -64,8 +90,8 @@ async def test_bfs_depth_0(client: AsyncHttpClient) -> None:
         result = await expander.expand(CategoryRef(title="Root"), client)
 
     assert mock_fetch.call_count == 1
-    assert result.record.article_count == 2
-    assert [r.page_id for r in result.child_refs] == [1, 2]
+    assert _record(result).article_count == 2
+    assert [r.page_id for r in _refs(result)] == [1, 2]
 
 
 async def test_bfs_depth_1(client: AsyncHttpClient) -> None:
@@ -81,8 +107,8 @@ async def test_bfs_depth_1(client: AsyncHttpClient) -> None:
         result = await expander.expand(CategoryRef(title="Root"), client)
 
     assert mock_fetch.call_count == 2
-    assert result.record.article_count == 3
-    assert {r.page_id for r in result.child_refs} == {1, 2, 3}
+    assert _record(result).article_count == 3
+    assert {r.page_id for r in _refs(result)} == {1, 2, 3}
 
 
 async def test_bfs_depth_2(client: AsyncHttpClient) -> None:
@@ -99,8 +125,8 @@ async def test_bfs_depth_2(client: AsyncHttpClient) -> None:
         result = await expander.expand(CategoryRef(title="Root"), client)
 
     assert mock_fetch.call_count == 3
-    assert result.record.article_count == 3
-    assert {r.page_id for r in result.child_refs} == {1, 2, 3}
+    assert _record(result).article_count == 3
+    assert {r.page_id for r in _refs(result)} == {1, 2, 3}
 
 
 async def test_deduplication(client: AsyncHttpClient) -> None:
@@ -116,8 +142,8 @@ async def test_deduplication(client: AsyncHttpClient) -> None:
         expander = WikiCategoryExpander(max_depth=1)
         result = await expander.expand(CategoryRef(title="Root"), client)
 
-    assert result.record.article_count == 2
-    page_ids = [r.page_id for r in result.child_refs]
+    assert _record(result).article_count == 2
+    page_ids = [r.page_id for r in _refs(result)]
     assert page_ids.count(99) == 1
 
 
@@ -134,8 +160,8 @@ async def test_skip_page_ids(client: AsyncHttpClient) -> None:
         )
         result = await expander.expand(CategoryRef(title="Root"), client)
 
-    assert result.record.article_count == 1
-    assert result.child_refs[0].page_id == 2
+    assert _record(result).article_count == 1
+    assert _refs(result)[0].page_id == 2
 
 
 async def test_category_blocklist(client: AsyncHttpClient) -> None:
@@ -158,7 +184,7 @@ async def test_category_blocklist(client: AsyncHttpClient) -> None:
 
     # "Blocked Sub" never fetched; only root + "Allowed Sub" = 2 calls
     assert mock_fetch.call_count == 2
-    assert result.record.article_count == 2
+    assert _record(result).article_count == 2
 
 
 async def test_empty_root(client: AsyncHttpClient) -> None:
@@ -170,8 +196,8 @@ async def test_empty_root(client: AsyncHttpClient) -> None:
         expander = WikiCategoryExpander(max_depth=2)
         result = await expander.expand(CategoryRef(title="EmptyRoot"), client)
 
-    assert result.record.article_count == 0
-    assert result.child_refs == []
+    assert _record(result).article_count == 0
+    assert _refs(result) == []
 
 
 async def test_depth_cap_not_recursed(client: AsyncHttpClient) -> None:
@@ -193,7 +219,7 @@ async def test_depth_cap_not_recursed(client: AsyncHttpClient) -> None:
     assert mock_fetch.call_count == 2
     called_titles = [call.args[0] for call in mock_fetch.call_args_list]
     assert "Sub B (depth-2)" not in called_titles
-    assert result.record.article_count == 2
+    assert _record(result).article_count == 2
 
 
 async def test_sub_categories_fetched_concurrently(
