@@ -15,7 +15,6 @@ from ladon_mimir.expanders import WikiCategoryExpander
 from ladon_mimir.models import CategoryRecord
 from ladon_mimir.refs import ArticleRef, CategoryRef
 
-
 # ---------------------------------------------------------------------------
 # Type-narrowing helpers
 #
@@ -33,10 +32,11 @@ def _record(exp: Expansion) -> CategoryRecord:
 
 
 def _refs(exp: Expansion) -> list[ArticleRef]:
-    assert all(isinstance(r, ArticleRef) for r in exp.child_refs), (
-        f"expected all ArticleRef, got {[type(r).__name__ for r in exp.child_refs]}"
-    )
+    assert all(
+        isinstance(r, ArticleRef) for r in exp.child_refs
+    ), f"expected all ArticleRef, got {[type(r).__name__ for r in exp.child_refs]}"
     return cast(list[ArticleRef], list(exp.child_refs))
+
 
 # ---------------------------------------------------------------------------
 # Helpers
