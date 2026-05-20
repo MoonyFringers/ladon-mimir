@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.2.0] — 2026-05-20
+
+### Added
+
+- **`MimirMCPAdapter`** — implements `LadonMCPAdapter` from `ladon-crawl>=0.3.1`,
+  registering two MCP data-plane tools and one resource:
+  - `mimir_article_search(query, limit=10)` — keyword search across title,
+    summary, and full text; results ordered by word count descending.
+  - `mimir_corpus_stats()` — total article and word counts, date range.
+  - `ladon://mimir/articles/{page_id}` resource — full Markdown article content.
+- **Entry point** — `ladon.mcp` group entry `mimir = ladon_mimir.mcp:MimirMCPAdapter`;
+  installing ladon-mimir alongside ladon-nous is sufficient to activate mimir tools.
+
+### Changed
+
+- Minimum `ladon-crawl` dependency bumped from `>=0.2.0` to `>=0.3.1` to pick
+  up the `LadonMCPAdapter` ABC.
+
+---
+
 ## [0.1.0] — 2026-04-26
 
 ### Added
@@ -21,5 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Public models: `ArticleRecord`, `CategoryRecord`, `SubCategoryRecord`, `ArticleRef`, `CategoryRef`.
 - 66 tests covering all layers: models, API helpers, expander BFS, sink, repository, storage, and CLI.
 
-[Unreleased]: https://github.com/MoonyFringers/ladon-mimir/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/MoonyFringers/ladon-mimir/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/MoonyFringers/ladon-mimir/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/MoonyFringers/ladon-mimir/releases/tag/v0.1.0

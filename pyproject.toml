@@ -1,6 +1,6 @@
 [project]
 name = "ladon-mimir"
-version = "0.1.0"
+version = "0.2.0"
 description = "Async Wikipedia adapter for Ladon — mathematical finance corpus for LLM fine-tuning."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,11 +25,14 @@ classifiers = [
 ]
 
 dependencies = [
-    "ladon-crawl>=0.2.0",
+    "ladon-crawl>=0.3.1",
     "duckdb>=0.10",
     "click>=8.0",
     "pytz>=2023.3",
 ]
+
+[project.entry-points."ladon.mcp"]
+mimir = "ladon_mimir.mcp:MimirMCPAdapter"
 
 [project.scripts]
 ladon-mimir = "ladon_mimir.cli:main"

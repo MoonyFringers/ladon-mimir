@@ -13,7 +13,7 @@ from .storage import export_parquet
 try:
     __version__ = version("ladon-mimir")
 except PackageNotFoundError:
-    __version__ = "0.1.0"
+    __version__ = "0.2.0"
 
 __all__ = [
     "__version__",
