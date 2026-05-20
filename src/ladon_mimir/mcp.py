@@ -44,10 +44,13 @@ class MimirMCPAdapter(LadonMCPAdapter):
                 LIMIT ?
             """
             pattern = f"%{query}%"
-            with duckdb.connect(db_path, read_only=True) as con:
-                rows = con.execute(
-                    sql, [pattern, pattern, pattern, limit]
-                ).fetchall()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    rows = con.execute(
+                        sql, [pattern, pattern, pattern, limit]
+                    ).fetchall()
+            except duckdb.Error as exc:
+                return [{"error": f"Database error: {exc}"}]
 
             return [
                 {
@@ -76,10 +79,14 @@ class MimirMCPAdapter(LadonMCPAdapter):
                     max(last_modified)::TEXT AS newest
                 FROM mimir_articles
             """
-            with duckdb.connect(db_path, read_only=True) as con:
-                row = con.execute(sql_summary).fetchone()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    row = con.execute(sql_summary).fetchone()
+            except duckdb.Error as exc:
+                return {"error": f"Database error: {exc}"}
 
-            if row is None or row[0] == 0:
+            assert row is not None  # COUNT(*) always returns exactly one row
+            if row[0] == 0:
                 return {"article_count": 0, "message": "No articles stored."}
 
             return {
