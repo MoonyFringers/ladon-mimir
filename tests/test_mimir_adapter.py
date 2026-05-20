@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from typing import Any, cast
 
 import duckdb
 import pytest
@@ -27,21 +28,33 @@ def _make_db(tmp_path: pytest.TempPathFactory) -> str:  # type: ignore[type-arg]
         )
     """)
     articles = [
-        (1, "Black–Scholes model",
-         "BSM is a model for option pricing.",
-         "The Black–Scholes–Merton model prices European options.",
-         json.dumps(["Mathematical finance", "Options"]), 1200,
-         "https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model"),
-        (2, "Monte Carlo method",
-         "A computational technique using random sampling.",
-         "Monte Carlo methods rely on repeated random sampling.",
-         json.dumps(["Computational methods", "Statistics"]), 2300,
-         "https://en.wikipedia.org/wiki/Monte_Carlo_method"),
-        (3, "Stochastic calculus",
-         "Branch of mathematics operating on stochastic processes.",
-         "Stochastic calculus extends integration to stochastic processes.",
-         json.dumps(["Mathematics"]), 900,
-         "https://en.wikipedia.org/wiki/Stochastic_calculus"),
+        (
+            1,
+            "Black–Scholes model",
+            "BSM is a model for option pricing.",
+            "The Black–Scholes–Merton model prices European options.",
+            json.dumps(["Mathematical finance", "Options"]),
+            1200,
+            "https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model",
+        ),
+        (
+            2,
+            "Monte Carlo method",
+            "A computational technique using random sampling.",
+            "Monte Carlo methods rely on repeated random sampling.",
+            json.dumps(["Computational methods", "Statistics"]),
+            2300,
+            "https://en.wikipedia.org/wiki/Monte_Carlo_method",
+        ),
+        (
+            3,
+            "Stochastic calculus",
+            "Branch of mathematics operating on stochastic processes.",
+            "Stochastic calculus extends integration to stochastic processes.",
+            json.dumps(["Mathematics"]),
+            900,
+            "https://en.wikipedia.org/wiki/Stochastic_calculus",
+        ),
     ]
     for page_id, title, summary, full_text, cats, wc, url in articles:
         con.execute(
@@ -72,9 +85,11 @@ class TestMimirAdapterMetadata:
 
 
 class TestMimirArticleSearch:
-    def _search(self, adapter: MimirMCPAdapter, query: str, limit: int = 10) -> list:  # type: ignore[type-arg]
+    def _search(
+        self, adapter: MimirMCPAdapter, query: str, limit: int = 10
+    ) -> list[dict[str, Any]]:
         search_fn = adapter.mcp_tools()[0]
-        return search_fn(query=query, limit=limit)  # type: ignore[call-arg]
+        return cast(list[dict[str, Any]], search_fn(query=query, limit=limit))  # type: ignore[call-arg]
 
     def test_matches_title(self, adapter: MimirMCPAdapter) -> None:
         results = self._search(adapter, "Black")
@@ -95,7 +110,9 @@ class TestMimirArticleSearch:
         assert len(results) == 1
         assert results[0]["title"] == "Monte Carlo method"
 
-    def test_categories_deserialized_as_list(self, adapter: MimirMCPAdapter) -> None:
+    def test_categories_deserialized_as_list(
+        self, adapter: MimirMCPAdapter
+    ) -> None:
         results = self._search(adapter, "Black")
         assert isinstance(results[0]["categories"], list)
         assert "Mathematical finance" in results[0]["categories"]
@@ -115,9 +132,9 @@ class TestMimirArticleSearch:
 
 
 class TestMimirCorpusStats:
-    def _stats(self, adapter: MimirMCPAdapter) -> dict:  # type: ignore[type-arg]
+    def _stats(self, adapter: MimirMCPAdapter) -> dict[str, Any]:
         stats_fn = adapter.mcp_tools()[1]
-        return stats_fn()  # type: ignore[call-arg]
+        return cast(dict[str, Any], stats_fn())  # type: ignore[call-arg]
 
     def test_article_count(self, adapter: MimirMCPAdapter) -> None:
         stats = self._stats(adapter)
@@ -147,7 +164,7 @@ class TestMimirCorpusStats:
         con.close()
         empty_adapter = MimirMCPAdapter(empty_db)
         stats_fn = empty_adapter.mcp_tools()[1]
-        stats = stats_fn()  # type: ignore[call-arg]
+        stats = cast(dict[str, Any], stats_fn())  # type: ignore[call-arg]
         assert stats["article_count"] == 0
 
 
