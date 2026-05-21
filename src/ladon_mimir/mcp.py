@@ -10,7 +10,7 @@ from ladon.mcp import LadonMCPAdapter
 
 
 class MimirMCPAdapter(LadonMCPAdapter):
-    """Exposes mimir_articles and ladon_runs to ladon-nous via MCP tools.
+    """Exposes mimir_articles to ladon-nous via MCP tools.
 
     Registered via the ``ladon.mcp`` entry-point group — installing
     ladon-mimir alongside ladon-nous is sufficient; no extra configuration.
@@ -44,10 +44,13 @@ class MimirMCPAdapter(LadonMCPAdapter):
                 LIMIT ?
             """
             pattern = f"%{query}%"
-            with duckdb.connect(db_path, read_only=True) as con:
-                rows = con.execute(
-                    sql, [pattern, pattern, pattern, limit]
-                ).fetchall()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    rows = con.execute(
+                        sql, [pattern, pattern, pattern, limit]
+                    ).fetchall()
+            except duckdb.Error as exc:
+                return [{"error": f"Database error: {exc}"}]
 
             return [
                 {
@@ -64,9 +67,8 @@ class MimirMCPAdapter(LadonMCPAdapter):
         def mimir_corpus_stats() -> dict[str, Any]:
             """Return summary statistics for the stored Wikipedia corpus.
 
-            Includes: total article count, total word count, date range of
-            last_modified timestamps, and a breakdown of article counts per
-            top-level category.
+            Includes: total article count, total word count, and the date
+            range of last_modified timestamps.
             """
             sql_summary = """
                 SELECT
@@ -76,10 +78,14 @@ class MimirMCPAdapter(LadonMCPAdapter):
                     max(last_modified)::TEXT AS newest
                 FROM mimir_articles
             """
-            with duckdb.connect(db_path, read_only=True) as con:
-                row = con.execute(sql_summary).fetchone()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    row = con.execute(sql_summary).fetchone()
+            except duckdb.Error as exc:
+                return {"error": f"Database error: {exc}"}
 
-            if row is None or row[0] == 0:
+            assert row is not None  # COUNT(*) always returns exactly one row
+            if row[0] == 0:
                 return {"article_count": 0, "message": "No articles stored."}
 
             return {
@@ -104,8 +110,11 @@ class MimirMCPAdapter(LadonMCPAdapter):
                 FROM mimir_articles
                 WHERE page_id = ?
             """
-            with duckdb.connect(db_path, read_only=True) as con:
-                row = con.execute(sql, [page_id]).fetchone()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    row = con.execute(sql, [page_id]).fetchone()
+            except duckdb.Error as exc:
+                return f"Error fetching article {page_id}: {exc}"
 
             if row is None:
                 return f"Article {page_id} not found."

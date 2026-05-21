@@ -130,6 +130,17 @@ class TestMimirArticleSearch:
         word_counts = [r["word_count"] for r in results]
         assert word_counts == sorted(word_counts, reverse=True)
 
+    def test_db_error_returns_error_dict(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:  # type: ignore[type-arg]
+        empty_db = str(tmp_path / "empty.db")  # type: ignore[operator]
+        duckdb.connect(empty_db).close()
+        adapter = MimirMCPAdapter(empty_db)
+        search_fn = adapter.mcp_tools()[0]
+        result = cast(list[dict[str, Any]], search_fn(query="test"))  # type: ignore[call-arg]
+        assert len(result) == 1
+        assert "error" in result[0]
+
 
 class TestMimirCorpusStats:
     def _stats(self, adapter: MimirMCPAdapter) -> dict[str, Any]:
@@ -167,6 +178,16 @@ class TestMimirCorpusStats:
         stats = cast(dict[str, Any], stats_fn())  # type: ignore[call-arg]
         assert stats["article_count"] == 0
 
+    def test_db_error_returns_error_dict(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:  # type: ignore[type-arg]
+        empty_db = str(tmp_path / "empty.db")  # type: ignore[operator]
+        duckdb.connect(empty_db).close()
+        empty_adapter = MimirMCPAdapter(empty_db)
+        stats_fn = empty_adapter.mcp_tools()[1]
+        result = cast(dict[str, Any], stats_fn())  # type: ignore[call-arg]
+        assert "error" in result
+
 
 class TestMimirArticleResource:
     def _resource(self, adapter: MimirMCPAdapter, page_id: int) -> str:
@@ -187,3 +208,12 @@ class TestMimirArticleResource:
     def test_missing_page_id(self, adapter: MimirMCPAdapter) -> None:
         content = self._resource(adapter, 999)
         assert "not found" in content
+
+    def test_db_error_returns_error_string(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:  # type: ignore[type-arg]
+        empty_db = str(tmp_path / "empty.db")  # type: ignore[operator]
+        duckdb.connect(empty_db).close()
+        adapter = MimirMCPAdapter(empty_db)
+        content = self._resource(adapter, 1)
+        assert "Error" in content
