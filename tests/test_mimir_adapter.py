@@ -208,3 +208,12 @@ class TestMimirArticleResource:
     def test_missing_page_id(self, adapter: MimirMCPAdapter) -> None:
         content = self._resource(adapter, 999)
         assert "not found" in content
+
+    def test_db_error_returns_error_string(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:  # type: ignore[type-arg]
+        empty_db = str(tmp_path / "empty.db")  # type: ignore[operator]
+        duckdb.connect(empty_db).close()
+        adapter = MimirMCPAdapter(empty_db)
+        content = self._resource(adapter, 1)
+        assert "Error" in content

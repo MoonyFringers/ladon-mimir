@@ -67,9 +67,8 @@ class MimirMCPAdapter(LadonMCPAdapter):
         def mimir_corpus_stats() -> dict[str, Any]:
             """Return summary statistics for the stored Wikipedia corpus.
 
-            Includes: total article count, total word count, date range of
-            last_modified timestamps, and a breakdown of article counts per
-            top-level category.
+            Includes: total article count, total word count, and the date
+            range of last_modified timestamps.
             """
             sql_summary = """
                 SELECT
@@ -111,8 +110,11 @@ class MimirMCPAdapter(LadonMCPAdapter):
                 FROM mimir_articles
                 WHERE page_id = ?
             """
-            with duckdb.connect(db_path, read_only=True) as con:
-                row = con.execute(sql, [page_id]).fetchone()
+            try:
+                with duckdb.connect(db_path, read_only=True) as con:
+                    row = con.execute(sql, [page_id]).fetchone()
+            except duckdb.Error as exc:
+                return f"Error fetching article {page_id}: {exc}"
 
             if row is None:
                 return f"Article {page_id} not found."
