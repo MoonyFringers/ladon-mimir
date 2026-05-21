@@ -10,7 +10,7 @@ from ladon.mcp import LadonMCPAdapter
 
 
 class MimirMCPAdapter(LadonMCPAdapter):
-    """Exposes mimir_articles and ladon_runs to ladon-nous via MCP tools.
+    """Exposes mimir_articles to ladon-nous via MCP tools.
 
     Registered via the ``ladon.mcp`` entry-point group — installing
     ladon-mimir alongside ladon-nous is sufficient; no extra configuration.
